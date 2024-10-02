@@ -313,7 +313,7 @@ def x_flag(filename):
     idx = blockLength
     curr = head.prev
     while curr != head:
-        print("SR1 at start " + str(curr.sr1))
+      
         if curr.opcode == NOP:
             curr.next.prev = curr.prev
             curr.prev.next = curr.next
@@ -327,28 +327,30 @@ def x_flag(filename):
             curr.nu3 = sr_to_vr[curr.sr3]
             sr_to_vr[curr.sr3] = INVALID
             last_use[curr.sr3] = float("inf")
-        print("SR1 at middle1 " + str(curr.sr1))
+        
         if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
-            if sr_to_vr == INVALID:
+            if sr_to_vr[curr.sr1] == INVALID:
                 sr_to_vr[curr.sr1] = vrName
                 vrName += 1
             curr.vr1 = sr_to_vr[curr.sr1]
             curr.nu1 = last_use[curr.sr1]
-        print("SR1 at middle2 " + str(curr.sr1))
+        if curr.sr1 != None and curr.opcode == OUTPUT:
+            curr.vr1 = curr.sr1
+        
         if curr.sr2 != None:
-            if sr_to_vr == INVALID:
+            if sr_to_vr[curr.sr2] == INVALID:
                 sr_to_vr[curr.sr2] = vrName
                 vrName += 1
             curr.vr2 = sr_to_vr[curr.sr2]
             curr.nu2 = last_use[curr.sr2]
-        print("SR1 at middle3 " + str(curr.sr1))
+       
         if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
             last_use[curr.sr1] = idx
         if curr.sr2 != None:
             last_use[curr.sr2] = idx
         idx -= 1
         curr = curr.prev
-        print("SR1 at end " + str(curr.sr1))
+        
     node = head 
     while (node.next != head):
         node.next.printVR()
