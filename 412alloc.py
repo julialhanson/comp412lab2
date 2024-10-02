@@ -66,7 +66,11 @@ class IRNode:
         
     def __str__(self) -> str:
         return f"{wordArr[self.opcode]}     [{self.sr1}], [{self.sr2}], [{self.sr3}], [{self.vr1}], [{self.vr2}], [{self.vr3}], [{self.pr1}], [{self.pr2}], [{self.pr3}], [{self.nu1}], [{self.nu2}], [{self.nu3}]"
-        pass
+    
+    def printVR(self):
+        if (self.opcode == LOAD):
+            print(f"{wordArr[self.opcode]} r{self.vr1} => r{self.vr3}")
+        elif ()
         
 def buildIR(filename):
     scanner = Scanner(filename)
