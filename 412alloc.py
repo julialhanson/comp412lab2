@@ -68,8 +68,10 @@ class IRNode:
         return f"{wordArr[self.opcode]}     [{self.sr1}], [{self.sr2}], [{self.sr3}], [{self.vr1}], [{self.vr2}], [{self.vr3}], [{self.pr1}], [{self.pr2}], [{self.pr3}], [{self.nu1}], [{self.nu2}], [{self.nu3}]"
     
     def printVR(self):
-        if (self.opcode == LOAD or self.opcode == STORE):
+        if (self.opcode == LOAD):
             print(f"{wordArr[self.opcode]} r{self.vr1} => r{self.vr3}")
+        elif (self.opcode == STORE):
+            print(f"{wordArr[self.opcode]} r{self.vr1} => r{self.vr2}")
         elif (self.opcode == LOADI):
             print(f"{wordArr[self.opcode]} {self.vr1} => r{self.vr3}")
         elif (self.opcode == ADD or self.opcode == SUB or self.opcode == MULT or self.opcode == LSHIFT or self.opcode == RSHIFT):
@@ -328,21 +330,22 @@ def x_flag(filename):
             sr_to_vr[curr.sr3] = INVALID
             last_use[curr.sr3] = float("inf")
         
-        if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
-            if sr_to_vr[curr.sr1] == INVALID:
-                sr_to_vr[curr.sr1] = vrName
-                vrName += 1
-            curr.vr1 = sr_to_vr[curr.sr1]
-            curr.nu1 = last_use[curr.sr1]
-        if curr.sr1 != None and curr.opcode == OUTPUT:
-            curr.vr1 = curr.sr1
-        
         if curr.sr2 != None:
             if sr_to_vr[curr.sr2] == INVALID:
                 sr_to_vr[curr.sr2] = vrName
                 vrName += 1
             curr.vr2 = sr_to_vr[curr.sr2]
             curr.nu2 = last_use[curr.sr2]
+        if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
+            if sr_to_vr[curr.sr1] == INVALID:
+                sr_to_vr[curr.sr1] = vrName
+                vrName += 1
+            curr.vr1 = sr_to_vr[curr.sr1]
+            curr.nu1 = last_use[curr.sr1]
+        if (curr.sr1 != None) and (curr.opcode == OUTPUT or curr.opcode == LOADI):
+            curr.vr1 = curr.sr1
+        
+        
        
         if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
             last_use[curr.sr1] = idx
@@ -355,8 +358,6 @@ def x_flag(filename):
     while (node.next != head):
         node.next.printVR()
         node = node.next
-        
-    print("X flag worked")
     
 def k_flag(input):
     print(type(input))
