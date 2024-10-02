@@ -68,9 +68,16 @@ class IRNode:
         return f"{wordArr[self.opcode]}     [{self.sr1}], [{self.sr2}], [{self.sr3}], [{self.vr1}], [{self.vr2}], [{self.vr3}], [{self.pr1}], [{self.pr2}], [{self.pr3}], [{self.nu1}], [{self.nu2}], [{self.nu3}]"
     
     def printVR(self):
-        if (self.opcode == LOAD):
+        if (self.opcode == LOAD or self.opcode == STORE):
             print(f"{wordArr[self.opcode]} r{self.vr1} => r{self.vr3}")
-        elif ()
+        elif (self.opcode == LOADI):
+            print(f"{wordArr[self.opcode]} {self.vr1} => r{self.vr3}")
+        elif (self.opcode == ADD or self.opcode == SUB or self.opcode == MULT or self.opcode == LSHIFT or self.opcode == RSHIFT):
+            print(f"{wordArr[self.opcode]} r{self.vr1}, r{self.vr2} => r{self.vr3}")
+        elif (self.opcode == OUTPUT):
+            print(f"{wordArr[self.opcode]} {self.vr1}")
+        else:
+            print(f"{wordArr[self.opcode]}")
         
 def buildIR(filename):
     scanner = Scanner(filename)
@@ -88,13 +95,13 @@ def buildIR(filename):
             is_error = True
         ir = parseLine(scanner)
         
-    if is_error == True:
-        print("Due to syntax errors, run terminates.")
-    else:
-        node = head
-        while (node.next != head):
-            print(node.next)
-            node = node.next
+    # if is_error == True:
+    #     print("Due to syntax errors, run terminates.")
+    # else:
+    #     node = head
+    #     while (node.next != head):
+    #         print(node.next)
+    #         node = node.next
     return (head, scanner.maxreg, opcount)
             
 def parseLine(scanner):
@@ -306,6 +313,7 @@ def x_flag(filename):
     idx = blockLength
     curr = head.prev
     while curr != head:
+        print("SR1 at start " + str(curr.sr1))
         if curr.opcode == NOP:
             curr.next.prev = curr.prev
             curr.prev.next = curr.next
@@ -319,29 +327,31 @@ def x_flag(filename):
             curr.nu3 = sr_to_vr[curr.sr3]
             sr_to_vr[curr.sr3] = INVALID
             last_use[curr.sr3] = float("inf")
+        print("SR1 at middle1 " + str(curr.sr1))
         if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
             if sr_to_vr == INVALID:
-                
                 sr_to_vr[curr.sr1] = vrName
                 vrName += 1
             curr.vr1 = sr_to_vr[curr.sr1]
             curr.nu1 = last_use[curr.sr1]
+        print("SR1 at middle2 " + str(curr.sr1))
         if curr.sr2 != None:
             if sr_to_vr == INVALID:
                 sr_to_vr[curr.sr2] = vrName
                 vrName += 1
             curr.vr2 = sr_to_vr[curr.sr2]
             curr.nu2 = last_use[curr.sr2]
+        print("SR1 at middle3 " + str(curr.sr1))
         if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
             last_use[curr.sr1] = idx
         if curr.sr2 != None:
             last_use[curr.sr2] = idx
         idx -= 1
         curr = curr.prev
-        
+        print("SR1 at end " + str(curr.sr1))
     node = head 
     while (node.next != head):
-        print(node.next)
+        node.next.printVR()
         node = node.next
         
     print("X flag worked")
