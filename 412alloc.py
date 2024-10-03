@@ -276,8 +276,7 @@ def parseLine(scanner):
 def main ():
     argslst = argv
     filename = argslst[-1]
-    print("in main")
-    print(argslst)
+    
     # if os.path.exists(filename) == False:
     #     print("ERROR: file does not exists or filepath is missing")
     if "-h" in argslst:
@@ -307,11 +306,11 @@ def h_flag():
 def x_flag(filename):
     
     (head, maxreg, blockLength) = buildIR(filename)
-    print(maxreg)
+    
     vrName = 0
     sr_to_vr = [INVALID for i in range(maxreg + 1)]
     last_use = [float("inf") for i in range(maxreg + 1)]
-    print("SR TO VR TYPE IS " + str(type(sr_to_vr)))
+   
     idx = blockLength
     curr = head.prev
     while curr != head:
