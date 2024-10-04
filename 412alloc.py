@@ -179,7 +179,7 @@ def parseLine(scanner):
                 errorFlag = True
                 return node
         else:
-            print("ERROR " + str(node.linenum) + ": missing first source register in " + scanner.wordArr[node.opcode])
+            print("ERROR " + str(node.linenum) + ": missing first constant in " + scanner.wordArr[node.opcode])
             node.opcode = ERROR
             errorFlag = True
             return node
