@@ -34,7 +34,7 @@ errorflag = False
 wordArr = ["loadI", "nop", "output", "sub", "store", "load", "=>", ',', "\\n",  "", "lshift", "COMMENT", "mult", "add", "rshift"]
 
 maxreg = 0
-
+beeboop = 32768
 class IRNode:
     def __init__(self, linenum, sr1: int = None, sr2: int = None, sr3: int = None) -> None:
         self.linenum = linenum
@@ -359,7 +359,7 @@ def x_flag(filename):
     #     node = node.next
         
 
-curr_memloc = 32768
+
 
 def k_flag(k, filename):
     if int(k) < 2 or int(k) > 65:
@@ -371,7 +371,6 @@ def k_flag(k, filename):
     pr_to_vr = [INVALID for i in range(k_int)]
     vr_to_spill = [0 for i in range(vrName)]
     pr_nu = [INVALID for i in range(k_int)]
-    
     marked = INVALID
     available_prs = list(range(k_int-2, -1, -1))
     print("AVAIL PRS" + str(type(available_prs)))
@@ -403,9 +402,10 @@ def k_flag(k, filename):
             return x
         
     def spill(i):
+        global beeboop
         if (vr_to_spill[pr_to_vr[i]] == 0):
-            vr_to_spill[pr_to_vr[i]] = curr_memloc
-            curr_memloc += 4
+            vr_to_spill[pr_to_vr[i]] = beeboop
+            beeboop += 4
             print(f"loadI {vr_to_spill[pr_to_vr[i]]} => r{spill_pr}")
             print(f"store r{i} => {spill_pr}")
         vr_to_pr[pr_to_vr[i]] = INVALID
@@ -421,38 +421,39 @@ def k_flag(k, filename):
         pr_to_vr[pr] = INVALID
         pr_nu[pr] = INVALID
     
-    
     while curr.next != head:
+        # handling O1
         if curr.vr1 != None:
-            print("breaking value is " + str(curr.vr1))
+            #print("breaking value is " + str(curr.vr1))
             if vr_to_pr[curr.vr1] != INVALID:
                 curr.pr1 = vr_to_pr[curr.vr1]
             else:
                 x = getPR(available_prs, curr.vr1, curr.nu1, marked)
+                restore(curr.vr1, x, spill_pr)
                 curr.pr1 = vr_to_pr[curr.vr1]
         if curr.nu1 == float('inf'):
             free_pr(curr.pr1, available_prs)   
+        # handling O2
         if curr.vr2 != None:
-            if vr_to_pr[curr.vr1] != INVALID:
-                curr.pr1 = vr_to_pr[curr.vr1]
+            if vr_to_pr[curr.vr2] != INVALID:
+                curr.pr2 = vr_to_pr[curr.vr2]
             else:
-                x = getPR(available_prs, curr.vr1, curr.nu1, marked)
-                curr.pr1 = vr_to_pr[curr.vr1]
+                x = getPR(available_prs, curr.vr2, curr.nu2, marked)
+                restore(curr.vr2, x, spill_pr)
+                curr.pr2 = x
         if curr.nu2 == float('inf'):
             free_pr(curr.pr2, available_prs)  
+        # handling O3
         if curr.vr3 != None:
-            if vr_to_pr[curr.vr1] != INVALID:
-                curr.pr1 = vr_to_pr[curr.vr1]
-            else:
-                x = getPR(available_prs, curr.vr1, curr.nu1, marked)
-                curr.pr1 = vr_to_pr[curr.vr1]
+            x = getPR(available_prs, curr.vr1, curr.nu1, marked)
+            curr.pr3 = x
         curr = curr.next
         
-    node2 = head
-    print("your coded did not break")
-    while node2.next != head:
-        node2.next.printVR()
-        node2 = node2.next
+    #node2 = head
+    # print("your coded did not break")
+    # while node2.next != head:
+    #     node2.next.printVR()
+    #     node2 = node2.next
             
     
 if __name__ == "__main__":
