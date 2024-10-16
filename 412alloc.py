@@ -272,7 +272,8 @@ def parseLine(scanner):
         node.opcode = ERROR
         errorFlag = True
         return node    
-
+vrName1 = 0
+k = 0
 def main ():
     argslst = argv
     filename = argslst[-1]
@@ -291,7 +292,7 @@ def main ():
         except ValueError:
             validk = False
         if validk:
-            k_flag(argslst[1])
+            k_flag(argslst[1], filename)
         else:
             print("Invalid flags, please try again")        
         
@@ -344,22 +345,115 @@ def x_flag(filename):
         if (curr.sr1 != None) and (curr.opcode == OUTPUT or curr.opcode == LOADI):
             curr.vr1 = curr.sr1
         
-        
-       
         if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
             last_use[curr.sr1] = idx
         if curr.sr2 != None:
             last_use[curr.sr2] = idx
         idx -= 1
         curr = curr.prev
+    node = head
+
+    return head, vrName
+    # while (node.next != head):
+    #     node.next.printVR()
+    #     node = node.next
         
-    node = head 
-    while (node.next != head):
-        node.next.printVR()
-        node = node.next
+
+curr_memloc = 32768
+
+def k_flag(k, filename):
+    if int(k) < 2 or int(k) > 65:
+        print("K is out of expected range, please try again with an input integer between 3 and 64 (inclusive)")
+        return None
+    head, vrName = x_flag(filename)
+    k_int = int(k)
+    vr_to_pr = [INVALID for i in range(vrName)]
+    pr_to_vr = [INVALID for i in range(k_int)]
+    vr_to_spill = [0 for i in range(vrName)]
+    pr_nu = [INVALID for i in range(k_int)]
     
-def k_flag(input):
-    print(type(input))
+    marked = INVALID
+    available_prs = list(range(k_int-2, -1, -1))
+    print("AVAIL PRS" + str(type(available_prs)))
+    curr = head
+    spill_pr = k_int-1  
+    
+    def getPR(prs, vr, nu, marked):
+        if prs:
+            x = prs.pop()
+            vr_to_pr[vr] = x
+            pr_to_vr[x] = vr
+            pr_nu[x] = nu
+            return x
+        else:
+            max_nu = 0
+            max_idx = 0
+            for i in range(len(pr_nu)):
+                if pr_nu[i] != None:
+                    if max_nu <= pr_nu[i] and marked == i:
+                        continue
+                    else:
+                        max_nu = pr_nu[i]
+                        max_idx = i
+            x = max_idx
+            spill(x)
+            vr_to_pr[vr] = x
+            pr_to_vr[x] = vr
+            pr_nu[x] = nu
+            return x
+        
+    def spill(i):
+        if (vr_to_spill[pr_to_vr[i]] == 0):
+            vr_to_spill[pr_to_vr[i]] = curr_memloc
+            curr_memloc += 4
+            print(f"loadI {vr_to_spill[pr_to_vr[i]]} => r{spill_pr}")
+            print(f"store r{i} => {spill_pr}")
+        vr_to_pr[pr_to_vr[i]] = INVALID
+        pr_to_vr[i] = INVALID
+                
+    def restore(vr, pr, spill):
+        print(f"loadI {vr_to_spill[vr]} => r{spill_pr}")
+        print(f"load r{spill_pr} => {pr}")
+        
+    def free_pr(pr, prs):
+        prs.append(pr)
+        vr_to_pr[pr_to_vr[pr]] = INVALID
+        pr_to_vr[pr] = INVALID
+        pr_nu[pr] = INVALID
+    
+    
+    while curr.next != head:
+        if curr.vr1 != None:
+            print("breaking value is " + str(curr.vr1))
+            if vr_to_pr[curr.vr1] != INVALID:
+                curr.pr1 = vr_to_pr[curr.vr1]
+            else:
+                x = getPR(available_prs, curr.vr1, curr.nu1, marked)
+                curr.pr1 = vr_to_pr[curr.vr1]
+        if curr.nu1 == float('inf'):
+            free_pr(curr.pr1, available_prs)   
+        if curr.vr2 != None:
+            if vr_to_pr[curr.vr1] != INVALID:
+                curr.pr1 = vr_to_pr[curr.vr1]
+            else:
+                x = getPR(available_prs, curr.vr1, curr.nu1, marked)
+                curr.pr1 = vr_to_pr[curr.vr1]
+        if curr.nu2 == float('inf'):
+            free_pr(curr.pr2, available_prs)  
+        if curr.vr3 != None:
+            if vr_to_pr[curr.vr1] != INVALID:
+                curr.pr1 = vr_to_pr[curr.vr1]
+            else:
+                x = getPR(available_prs, curr.vr1, curr.nu1, marked)
+                curr.pr1 = vr_to_pr[curr.vr1]
+        curr = curr.next
+        
+    node2 = head
+    print("your coded did not break")
+    while node2.next != head:
+        node2.next.printVR()
+        node2 = node2.next
+            
     
 if __name__ == "__main__":
     main()
