@@ -73,11 +73,25 @@ class IRNode:
         elif (self.opcode == STORE):
             print(f"{wordArr[self.opcode]} r{self.vr1} => r{self.vr2}")
         elif (self.opcode == LOADI):
-            print(f"{wordArr[self.opcode]} {self.vr1} => r{self.vr3}")
+            print(f"{wordArr[self.opcode]} {self.sr1} => r{self.vr3}")
         elif (self.opcode == ADD or self.opcode == SUB or self.opcode == MULT or self.opcode == LSHIFT or self.opcode == RSHIFT):
             print(f"{wordArr[self.opcode]} r{self.vr1}, r{self.vr2} => r{self.vr3}")
         elif (self.opcode == OUTPUT):
-            print(f"{wordArr[self.opcode]} {self.vr1}")
+            print(f"{wordArr[self.opcode]} {self.sr1}")
+        else:
+            print(f"{wordArr[self.opcode]}")
+            
+    def printPR(self):
+        if (self.opcode == LOAD):
+            print(f"{wordArr[self.opcode]} r{self.pr1} => r{self.pr3}")
+        elif (self.opcode == STORE):
+            print(f"{wordArr[self.opcode]} r{self.pr1} => r{self.pr2}")
+        elif (self.opcode == LOADI):
+            print(f"{wordArr[self.opcode]} {self.sr1} => r{self.pr3}")
+        elif (self.opcode == ADD or self.opcode == SUB or self.opcode == MULT or self.opcode == LSHIFT or self.opcode == RSHIFT):
+            print(f"{wordArr[self.opcode]} r{self.pr1}, r{self.pr2} => r{self.pr3}")
+        elif (self.opcode == OUTPUT):
+            print(f"{wordArr[self.opcode]} {self.sr1}")
         else:
             print(f"{wordArr[self.opcode]}")
         
@@ -329,6 +343,7 @@ def x_flag(filename):
             curr.nu3 = sr_to_vr[curr.sr3]
             sr_to_vr[curr.sr3] = INVALID
             last_use[curr.sr3] = float("inf")
+        else: curr.vr3 = INVALID
         
         if curr.sr2 != None:
             if sr_to_vr[curr.sr2] == INVALID:
@@ -336,14 +351,15 @@ def x_flag(filename):
                 vrName += 1
             curr.vr2 = sr_to_vr[curr.sr2]
             curr.nu2 = last_use[curr.sr2]
+        else: curr.vr2 = INVALID
         if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
             if sr_to_vr[curr.sr1] == INVALID:
                 sr_to_vr[curr.sr1] = vrName
                 vrName += 1
             curr.vr1 = sr_to_vr[curr.sr1]
             curr.nu1 = last_use[curr.sr1]
-        if (curr.sr1 != None) and (curr.opcode == OUTPUT or curr.opcode == LOADI):
-            curr.vr1 = curr.sr1
+        else: curr.vr1 = INVALID
+        
         
         if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
             last_use[curr.sr1] = idx
@@ -368,21 +384,23 @@ def k_flag(k, filename):
     head, vrName = x_flag(filename)
     k_int = int(k)
     vr_to_pr = [INVALID for i in range(vrName)]
-    pr_to_vr = [INVALID for i in range(k_int)]
+    pr_to_vr = [INVALID for i in range(k_int - 1)]
     vr_to_spill = [0 for i in range(vrName)]
-    pr_nu = [INVALID for i in range(k_int)]
+    pr_nu = [INVALID for i in range(k_int - 1)]
     marked = INVALID
     available_prs = list(range(k_int-2, -1, -1))
-    print("AVAIL PRS" + str(type(available_prs)))
-    curr = head
+    
+    curr = head.next
     spill_pr = k_int-1  
     
     def getPR(prs, vr, nu, marked):
         if prs:
             x = prs.pop()
+            
             vr_to_pr[vr] = x
             pr_to_vr[x] = vr
             pr_nu[x] = nu
+            # print(f"Got {x}, {vr}, {vr_to_pr[vr]}")
             return x
         else:
             max_nu = 0
@@ -406,14 +424,14 @@ def k_flag(k, filename):
         if (vr_to_spill[pr_to_vr[i]] == 0):
             vr_to_spill[pr_to_vr[i]] = beeboop
             beeboop += 4
-            print(f"loadI {vr_to_spill[pr_to_vr[i]]} => r{spill_pr}")
-            print(f"store r{i} => {spill_pr}")
+            print(f"loadI {vr_to_spill[pr_to_vr[i]]} => r{spill_pr} //spilling")
+            print(f"store r{i} => {spill_pr} //spilling")
         vr_to_pr[pr_to_vr[i]] = INVALID
         pr_to_vr[i] = INVALID
                 
     def restore(vr, pr, spill):
-        print(f"loadI {vr_to_spill[vr]} => r{spill_pr}")
-        print(f"load r{spill_pr} => {pr}")
+        print(f"loadI {vr_to_spill[vr]} => r{spill_pr} // restoring")
+        print(f"load r{spill_pr} => {pr} // restoring")
         
     def free_pr(pr, prs):
         prs.append(pr)
@@ -421,20 +439,23 @@ def k_flag(k, filename):
         pr_to_vr[pr] = INVALID
         pr_nu[pr] = INVALID
     
-    while curr.next != head:
+    while curr.next != head.next:
         # handling O1
-        if curr.vr1 != None:
+        if curr.vr1 != INVALID:
             #print("breaking value is " + str(curr.vr1))
             if vr_to_pr[curr.vr1] != INVALID:
                 curr.pr1 = vr_to_pr[curr.vr1]
             else:
+                # print(curr.vr1)
+                # print(vr_to_pr)
+                # print(vr_to_pr[curr.vr1])
                 x = getPR(available_prs, curr.vr1, curr.nu1, marked)
                 restore(curr.vr1, x, spill_pr)
                 curr.pr1 = vr_to_pr[curr.vr1]
         if curr.nu1 == float('inf'):
             free_pr(curr.pr1, available_prs)   
         # handling O2
-        if curr.vr2 != None:
+        if curr.vr2 != INVALID:
             if vr_to_pr[curr.vr2] != INVALID:
                 curr.pr2 = vr_to_pr[curr.vr2]
             else:
@@ -444,9 +465,10 @@ def k_flag(k, filename):
         if curr.nu2 == float('inf'):
             free_pr(curr.pr2, available_prs)  
         # handling O3
-        if curr.vr3 != None:
-            x = getPR(available_prs, curr.vr1, curr.nu1, marked)
+        if curr.vr3 != INVALID:
+            x = getPR(available_prs, curr.vr3, curr.nu3, marked)
             curr.pr3 = x
+        curr.printPR()
         curr = curr.next
         
     #node2 = head
