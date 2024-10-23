@@ -398,40 +398,43 @@ def x_flag(filename):
             curr.nu3 = sr_to_vr[curr.sr3]
             sr_to_vr[curr.sr3] = INVALID
             last_use[curr.sr3] = float("inf")
-
+        else:
+            curr.vr3 = INVALID
         if curr.sr2 != None:
             if sr_to_vr[curr.sr2] == INVALID:
                 sr_to_vr[curr.sr2] = vrName
                 vrName += 1
             curr.vr2 = sr_to_vr[curr.sr2]
             curr.nu2 = last_use[curr.sr2]
+        else:
+            curr.vr2 = INVALID
         if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
             if sr_to_vr[curr.sr1] == INVALID:
                 sr_to_vr[curr.sr1] = vrName
                 vrName += 1
             curr.vr1 = sr_to_vr[curr.sr1]
             curr.nu1 = last_use[curr.sr1]
-        if (curr.sr1 != None) and (curr.opcode == OUTPUT or curr.opcode == LOADI):
-            curr.vr1 = curr.sr1
-
-
-
+        # if (curr.sr1 != None) and (curr.opcode == OUTPUT or curr.opcode == LOADI):
+        #     curr.vr1 = curr.sr1
+        else: curr.vr1 = INVALID
         if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
             last_use[curr.sr1] = idx
         if curr.sr2 != None:
             last_use[curr.sr2] = idx
         idx -= 1
         curr = curr.prev
-
-    node = head 
-    while (node.next != head):
-        node.next.printVR()
-        node = node.next
+    return head, vrName
+    # node = head 
+    # while (node.next != head):
+    #     node.next.printVR()
+    #     node = node.next
+        
     
 
 
 
 def k_flag(k, filename):
+    
     if int(k) < 2 or int(k) > 65:
         print("K is out of expected range, please try again with an input integer between 3 and 64 (inclusive)")
         return None
@@ -450,7 +453,6 @@ def k_flag(k, filename):
     def getPR(prs, vr, nu, marked):
         if prs:
             x = prs.pop()
-            
             vr_to_pr[vr] = x
             pr_to_vr[x] = vr
             pr_nu[x] = nu
@@ -525,11 +527,11 @@ def k_flag(k, filename):
         curr.printPR()
         curr = curr.next
         
-#     #node2 = head
-#     # print("your coded did not break")
-#     # while node2.next != head:
-#     #     node2.next.printVR()
-#     #     node2 = node2.next
+    #node2 = head
+    # print("your coded did not break")
+    # while node2.next != head:
+    #     node2.next.printVR()
+    #     node2 = node2.next
             
     
 if __name__ == "__main__":
