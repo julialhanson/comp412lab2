@@ -320,16 +320,71 @@ def h_flag():
 
 def x_flag(filename):
     
-    (head, maxreg, blockLength) = buildIR(filename)
+    # (head, maxreg, blockLength) = buildIR(filename)
     
+    # vrName = 0
+    # sr_to_vr = [INVALID for i in range(maxreg + 1)]
+    # last_use = [float("inf") for i in range(maxreg + 1)]
+   
+    # idx = blockLength
+    # curr = head.prev
+    # while curr != head:
+      
+    #     if curr.opcode == NOP:
+    #         curr.next.prev = curr.prev
+    #         curr.prev.next = curr.next
+    #         curr = curr.prev
+    #         continue
+    #     if curr.sr3 != None:
+    #         if sr_to_vr[curr.sr3] == INVALID:
+    #             sr_to_vr[curr.sr3] = vrName
+    #             vrName += 1
+    #         curr.vr3 = sr_to_vr[curr.sr3]
+    #         curr.nu3 = sr_to_vr[curr.sr3]
+    #         sr_to_vr[curr.sr3] = INVALID
+    #         last_use[curr.sr3] = float("inf")
+    #     else: curr.vr3 = INVALID
+        
+    #     if curr.sr2 != None:
+    #         if sr_to_vr[curr.sr2] == INVALID:
+    #             sr_to_vr[curr.sr2] = vrName
+    #             vrName += 1
+    #         curr.vr2 = sr_to_vr[curr.sr2]
+    #         curr.nu2 = last_use[curr.sr2]
+    #     else: curr.vr2 = INVALID
+    #     if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
+    #         if sr_to_vr[curr.sr1] == INVALID:
+    #             sr_to_vr[curr.sr1] = vrName
+    #             vrName += 1
+    #         curr.vr1 = sr_to_vr[curr.sr1]
+    #         curr.nu1 = last_use[curr.sr1]
+    #     else: curr.vr1 = INVALID
+        
+        
+    #     if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
+    #         last_use[curr.sr1] = idx
+    #     if curr.sr2 != None:
+    #         last_use[curr.sr2] = idx
+    #     idx -= 1
+    #     curr = curr.prev
+    # node = head
+
+    # return head, vrName
+    # while (node.next != head):
+    #     node.next.printVR()
+    #     node = node.next
+    #def x_flag(filename):
+
+    (head, maxreg, blockLength) = buildIR(filename)
+
     vrName = 0
     sr_to_vr = [INVALID for i in range(maxreg + 1)]
     last_use = [float("inf") for i in range(maxreg + 1)]
-   
+
     idx = blockLength
     curr = head.prev
     while curr != head:
-      
+
         if curr.opcode == NOP:
             curr.next.prev = curr.prev
             curr.prev.next = curr.next
@@ -343,37 +398,36 @@ def x_flag(filename):
             curr.nu3 = sr_to_vr[curr.sr3]
             sr_to_vr[curr.sr3] = INVALID
             last_use[curr.sr3] = float("inf")
-        else: curr.vr3 = INVALID
-        
+
         if curr.sr2 != None:
             if sr_to_vr[curr.sr2] == INVALID:
                 sr_to_vr[curr.sr2] = vrName
                 vrName += 1
             curr.vr2 = sr_to_vr[curr.sr2]
             curr.nu2 = last_use[curr.sr2]
-        else: curr.vr2 = INVALID
         if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
             if sr_to_vr[curr.sr1] == INVALID:
                 sr_to_vr[curr.sr1] = vrName
                 vrName += 1
             curr.vr1 = sr_to_vr[curr.sr1]
             curr.nu1 = last_use[curr.sr1]
-        else: curr.vr1 = INVALID
-        
-        
+        if (curr.sr1 != None) and (curr.opcode == OUTPUT or curr.opcode == LOADI):
+            curr.vr1 = curr.sr1
+
+
+
         if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
             last_use[curr.sr1] = idx
         if curr.sr2 != None:
             last_use[curr.sr2] = idx
         idx -= 1
         curr = curr.prev
-    node = head
 
-    return head, vrName
-    # while (node.next != head):
-    #     node.next.printVR()
-    #     node = node.next
-        
+    node = head 
+    while (node.next != head):
+        node.next.printVR()
+        node = node.next
+    
 
 
 
@@ -471,11 +525,11 @@ def k_flag(k, filename):
         curr.printPR()
         curr = curr.next
         
-    #node2 = head
-    # print("your coded did not break")
-    # while node2.next != head:
-    #     node2.next.printVR()
-    #     node2 = node2.next
+#     #node2 = head
+#     # print("your coded did not break")
+#     # while node2.next != head:
+#     #     node2.next.printVR()
+#     #     node2 = node2.next
             
     
 if __name__ == "__main__":
