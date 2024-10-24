@@ -319,61 +319,6 @@ def h_flag():
     print("k <name>: this is a paramater that represents the number of registers available to the allocator. This value should be between 3 and 64 (inclusive).")
 
 def x_flag(filename):
-    
-    # (head, maxreg, blockLength) = buildIR(filename)
-    
-    # vrName = 0
-    # sr_to_vr = [INVALID for i in range(maxreg + 1)]
-    # last_use = [float("inf") for i in range(maxreg + 1)]
-   
-    # idx = blockLength
-    # curr = head.prev
-    # while curr != head:
-      
-    #     if curr.opcode == NOP:
-    #         curr.next.prev = curr.prev
-    #         curr.prev.next = curr.next
-    #         curr = curr.prev
-    #         continue
-    #     if curr.sr3 != None:
-    #         if sr_to_vr[curr.sr3] == INVALID:
-    #             sr_to_vr[curr.sr3] = vrName
-    #             vrName += 1
-    #         curr.vr3 = sr_to_vr[curr.sr3]
-    #         curr.nu3 = sr_to_vr[curr.sr3]
-    #         sr_to_vr[curr.sr3] = INVALID
-    #         last_use[curr.sr3] = float("inf")
-    #     else: curr.vr3 = INVALID
-        
-    #     if curr.sr2 != None:
-    #         if sr_to_vr[curr.sr2] == INVALID:
-    #             sr_to_vr[curr.sr2] = vrName
-    #             vrName += 1
-    #         curr.vr2 = sr_to_vr[curr.sr2]
-    #         curr.nu2 = last_use[curr.sr2]
-    #     else: curr.vr2 = INVALID
-    #     if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
-    #         if sr_to_vr[curr.sr1] == INVALID:
-    #             sr_to_vr[curr.sr1] = vrName
-    #             vrName += 1
-    #         curr.vr1 = sr_to_vr[curr.sr1]
-    #         curr.nu1 = last_use[curr.sr1]
-    #     else: curr.vr1 = INVALID
-        
-        
-    #     if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
-    #         last_use[curr.sr1] = idx
-    #     if curr.sr2 != None:
-    #         last_use[curr.sr2] = idx
-    #     idx -= 1
-    #     curr = curr.prev
-    # node = head
-
-    # return head, vrName
-    # while (node.next != head):
-    #     node.next.printVR()
-    #     node = node.next
-    #def x_flag(filename):
 
     (head, maxreg, blockLength) = buildIR(filename)
 
@@ -414,8 +359,6 @@ def x_flag(filename):
                 vrName += 1
             curr.vr1 = sr_to_vr[curr.sr1]
             curr.nu1 = last_use[curr.sr1]
-        # if (curr.sr1 != None) and (curr.opcode == OUTPUT or curr.opcode == LOADI):
-        #     curr.vr1 = curr.sr1
         else: curr.vr1 = INVALID
         if curr.sr1 != None and curr.opcode != OUTPUT and curr.opcode != LOADI:
             last_use[curr.sr1] = idx
@@ -439,7 +382,11 @@ def k_flag(k, filename):
         print("K is out of expected range, please try again with an input integer between 3 and 64 (inclusive)")
         return None
     head, vrName = x_flag(filename)
-    k_int = int(k)
+    if k == "":
+        k_int = 32
+    else:
+        k_int = int(k)
+    
     vr_to_pr = [INVALID for i in range(vrName)]
     pr_to_vr = [INVALID for i in range(k_int - 1)]
     vr_to_spill = [0 for i in range(vrName)]
@@ -456,14 +403,14 @@ def k_flag(k, filename):
             vr_to_pr[vr] = x
             pr_to_vr[x] = vr
             pr_nu[x] = nu
-            # print(f"Got {x}, {vr}, {vr_to_pr[vr]}")
+
             return x
         else:
             max_nu = 0
             max_idx = 0
             for i in range(len(pr_nu)):
                 if pr_nu[i] != None:
-                    if max_nu <= pr_nu[i] and marked == i:
+                    if max_nu <= pr_nu[i] or marked == i:
                         continue
                     else:
                         max_nu = pr_nu[i]
@@ -481,13 +428,13 @@ def k_flag(k, filename):
             vr_to_spill[pr_to_vr[i]] = beeboop
             beeboop += 4
             print(f"loadI {vr_to_spill[pr_to_vr[i]]} => r{spill_pr} //spilling")
-            print(f"store r{i} => {spill_pr} //spilling")
+            print(f"store r{i} => r{spill_pr} //spilling")
         vr_to_pr[pr_to_vr[i]] = INVALID
         pr_to_vr[i] = INVALID
                 
     def restore(vr, pr, spill):
         print(f"loadI {vr_to_spill[vr]} => r{spill_pr} // restoring")
-        print(f"load r{spill_pr} => {pr} // restoring")
+        print(f"load r{spill_pr} => r{pr} // restoring")
         
     def free_pr(pr, prs):
         prs.append(pr)
@@ -507,9 +454,7 @@ def k_flag(k, filename):
                 # print(vr_to_pr[curr.vr1])
                 x = getPR(available_prs, curr.vr1, curr.nu1, marked)
                 restore(curr.vr1, x, spill_pr)
-                curr.pr1 = vr_to_pr[curr.vr1]
-        if curr.nu1 == float('inf'):
-            free_pr(curr.pr1, available_prs)   
+                curr.pr1 = vr_to_pr[curr.vr1]   
         # handling O2
         if curr.vr2 != INVALID:
             if vr_to_pr[curr.vr2] != INVALID:
@@ -518,13 +463,22 @@ def k_flag(k, filename):
                 x = getPR(available_prs, curr.vr2, curr.nu2, marked)
                 restore(curr.vr2, x, spill_pr)
                 curr.pr2 = x
-        if curr.nu2 == float('inf'):
-            free_pr(curr.pr2, available_prs)  
+            if curr.nu2 == float('inf'):
+                free_pr(curr.pr2, available_prs)
+        if curr.vr1 != INVALID and curr.nu1 == float('inf'):
+                free_pr(curr.pr1, available_prs)  
         # handling O3
         if curr.vr3 != INVALID:
             x = getPR(available_prs, curr.vr3, curr.nu3, marked)
             curr.pr3 = x
+            if curr.nu3 == float('inf'):
+                free_pr(curr.pr3, available_prs)
         curr.printPR()
+        
+        # for i in range(len(vr_to_pr)):
+        #     if vr_to_pr[i] != INVALID and i != pr_to_vr[vr_to_pr[i]]:
+        #         print("WRONG MISMATCH: " + str(i) + " should map to VR2PR_PR2VRI" + str(pr_to_vr[vr_to_pr[i]]))
+        #         print("CURR PR IS " + str(vr_to_pr[i]))
         curr = curr.next
         
     #node2 = head
