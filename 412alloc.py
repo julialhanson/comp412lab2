@@ -1,5 +1,5 @@
 import os
-from sys import argv
+from sys import argv, stderr, stdout
 from scanner import Scanner
 
 # Constants from other file
@@ -291,13 +291,19 @@ k = 0
 def main ():
     argslst = argv
     filename = argslst[-1]
+    if len(argslst) < 2: 
+        print("ERROR: not enough arguments in the command line", file=stderr)
+        return
     
-    # if os.path.exists(filename) == False:
-    #     print("ERROR: file does not exists or filepath is missing")
+    if os.path.exists(filename) == False:
+        print("ERROR: file does not exists or filepath is missing", file=stderr)
+        return
     if "-h" in argslst:
         h_flag()
+        return
     elif "-x" in argslst:
         x_flag(filename)
+        return
     else:
         validk = True
         try:
@@ -308,7 +314,8 @@ def main ():
         if validk:
             k_flag(argslst[1], filename)
         else:
-            print("Invalid flags, please try again")        
+            print("Invalid flags, please try again")   
+            return     
         
 def h_flag():
     print("Valid Command Line Arguments:")
@@ -317,6 +324,7 @@ def h_flag():
     print("-h: produces a list of valid command-line arguments and includes descriptions of all command-line arguments")
     print("-x <name>: 412alloc will scan and parse the input block, and then will perform renaming on the code in the input block, and print the results to the standard output stream")
     print("k <name>: this is a paramater that represents the number of registers available to the allocator. This value should be between 3 and 64 (inclusive).")
+    
 
 def x_flag(filename):
 
@@ -379,8 +387,8 @@ def x_flag(filename):
 def k_flag(k, filename):
     
     if int(k) < 2 or int(k) > 65:
-        print("K is out of expected range, please try again with an input integer between 3 and 64 (inclusive)")
-        return None
+        print("K is out of expected range, please try again with an input integer between 3 and 64 (inclusive)", file=stderr)
+        return 
     head, vrName = x_flag(filename)
     if k == "":
         k_int = 32
@@ -391,7 +399,7 @@ def k_flag(k, filename):
     pr_to_vr = [INVALID for i in range(k_int - 1)]
     vr_to_spill = [0 for i in range(vrName)]
     pr_nu = [INVALID for i in range(k_int - 1)]
-    marked = INVALID
+    marked = [INVALID, INVALID]
     available_prs = list(range(k_int-2, -1, -1))
     
     curr = head.next
@@ -409,12 +417,16 @@ def k_flag(k, filename):
             max_nu = 0
             max_idx = 0
             for i in range(len(pr_nu)):
-                if pr_nu[i] != None:
-                    if max_nu <= pr_nu[i] or marked == i:
-                        continue
-                    else:
-                        max_nu = pr_nu[i]
-                        max_idx = i
+                if i not in marked and pr_nu[i] > max_nu:
+                    max_nu = pr_nu[i]
+                    max_idx = i
+                # if pr_nu[i] != None:
+                    
+                #     if max_nu <= pr_nu[i] or marked == i:
+                #         continue
+                #     else:
+                #         max_nu = pr_nu[i]
+                #         max_idx = i
             x = max_idx
             spill(x)
             vr_to_pr[vr] = x
@@ -449,24 +461,33 @@ def k_flag(k, filename):
             if vr_to_pr[curr.vr1] != INVALID:
                 curr.pr1 = vr_to_pr[curr.vr1]
             else:
-                # print(curr.vr1)
-                # print(vr_to_pr)
-                # print(vr_to_pr[curr.vr1])
+                
                 x = getPR(available_prs, curr.vr1, curr.nu1, marked)
-                restore(curr.vr1, x, spill_pr)
                 curr.pr1 = vr_to_pr[curr.vr1]   
+                restore(curr.vr1, x, spill_pr)
+            if marked[0] == INVALID:
+                marked[0] = vr_to_pr[curr.vr1]   
+            else:
+                marked[1] = vr_to_pr[curr.vr1]   
         # handling O2
         if curr.vr2 != INVALID:
             if vr_to_pr[curr.vr2] != INVALID:
                 curr.pr2 = vr_to_pr[curr.vr2]
             else:
                 x = getPR(available_prs, curr.vr2, curr.nu2, marked)
-                restore(curr.vr2, x, spill_pr)
                 curr.pr2 = x
-            if curr.nu2 == float('inf'):
-                free_pr(curr.pr2, available_prs)
+                restore(curr.vr2, x, spill_pr)
+            if marked[0] == INVALID:
+                marked[0] = vr_to_pr[curr.vr2]   
+            else:
+                marked[1] = vr_to_pr[curr.vr2]
+                
+            # if curr.nu2 == float('inf'):
+            #     free_pr(curr.pr2, available_prs)
         if curr.vr1 != INVALID and curr.nu1 == float('inf'):
-                free_pr(curr.pr1, available_prs)  
+            free_pr(curr.pr1, available_prs)  
+        if curr.vr2 != INVALID and curr.nu2 == float('inf'):
+            free_pr(curr.pr2, available_prs)  
         # handling O3
         if curr.vr3 != INVALID:
             x = getPR(available_prs, curr.vr3, curr.nu3, marked)
