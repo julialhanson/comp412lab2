@@ -291,7 +291,7 @@ k = 0
 def main ():
     argslst = argv
     filename = argslst[-1]
-    if len(argslst) < 2: 
+    if len(argslst) < 1: 
         print("ERROR: not enough arguments in the command line", file=stderr)
         return
     
@@ -305,17 +305,18 @@ def main ():
         x_flag(filename)
         return
     else:
-        validk = True
-        try:
-            int(argslst[1])
+        if len(argslst) > 1:
             validk = True
-        except ValueError:
-            validk = False
-        if validk:
-            k_flag(argslst[1], filename)
-        else:
-            print("Invalid flags, please try again")   
-            return     
+            try:
+                int(argslst[1])
+                validk = True
+            except ValueError:
+                validk = False
+            if validk:
+                k_flag(argslst[1], filename)
+            else:
+                print("Invalid flags, please try again", file=stderr)   
+                return     
         
 def h_flag():
     print("Valid Command Line Arguments:")
@@ -411,13 +412,16 @@ def k_flag(k, filename):
             vr_to_pr[vr] = x
             pr_to_vr[x] = vr
             pr_nu[x] = nu
-
+            print("Spill val for available reg: " + str(x))
             return x
         else:
             max_nu = 0
             max_idx = 0
+            print("Beginning i")
             for i in range(len(pr_nu)):
                 if i not in marked and pr_nu[i] > max_nu:
+                    print("Value " + str(i) + " not marked")
+                    print()
                     max_nu = pr_nu[i]
                     max_idx = i
                 # if pr_nu[i] != None:
@@ -427,7 +431,9 @@ def k_flag(k, filename):
                 #     else:
                 #         max_nu = pr_nu[i]
                 #         max_idx = i
+                print("incrementing")
             x = max_idx
+            print("spill val")
             spill(x)
             vr_to_pr[vr] = x
             pr_to_vr[x] = vr
